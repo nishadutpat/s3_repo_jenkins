@@ -2,7 +2,7 @@ provider "aws" {
   region = "us-east-1"
 }
 
-# IAM Role
+# IAM Role for EC2
 resource "aws_iam_role" "s3_admin_role" {
   name = "S3AdminRole"
 
@@ -11,7 +11,7 @@ resource "aws_iam_role" "s3_admin_role" {
     Statement = [{
       Effect = "Allow"
       Principal = {
-        Service = "ec2.amazonaws.com"  # Change this if used for Lambda, ECS, etc.
+        Service = "ec2.amazonaws.com"
       }
       Action = "sts:AssumeRole"
     }]
@@ -19,18 +19,23 @@ resource "aws_iam_role" "s3_admin_role" {
 }
 
 # Attach Administrator Policy to the Role
-resource "aws_iam_policy_attachment" "admin_policy" {
-  name       = "s3_admin_policy_attachment"
-  roles      = [aws_iam_role.s3_admin_role.name]
-  policy_arn = "arn:aws:iam::aws:policy/AdministratorAccess"
+resource "aws_iam_role_policy_attachment" "admin_policy" {
+  role       = aws_iam_role.s3_admin_role.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonS3FullAccess"
 }
 
-# (Optional) Create an S3 Bucket
+# Create IAM Instance Profile and Attach to EC2
+resource "aws_iam_instance_profile" "s3_admin_profile" {
+  name = "s3_admin_profile"
+  role = aws_iam_role.s3_admin_role.name
+}
+
+# S3 Bucket
 resource "aws_s3_bucket" "example_bucket" {
   bucket = "buckforjenkins"
 }
 
-# (Optional) Attach IAM Role to the S3 Bucket Policy
+# Attach IAM Role to the S3 Bucket Policy
 resource "aws_s3_bucket_policy" "bucket_policy" {
   bucket = aws_s3_bucket.example_bucket.id
 
@@ -41,8 +46,8 @@ resource "aws_s3_bucket_policy" "bucket_policy" {
       Principal = { AWS = aws_iam_role.s3_admin_role.arn }
       Action    = "s3:*"
       Resource  = [
-        "arn:aws:s3:::my-example-s3-bucket",
-        "arn:aws:s3:::my-example-s3-bucket/*"
+        "arn:aws:s3:::buckforjenkins",
+        "arn:aws:s3:::buckforjenkins/*"
       ]
     }]
   })
