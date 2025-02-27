@@ -27,7 +27,7 @@ resource "aws_iam_policy_attachment" "admin_policy" {
 
 # (Optional) Create an S3 Bucket
 resource "aws_s3_bucket" "example_bucket" {
-  bucket = "jenkins_bucket"
+  bucket = "buckforjenkins"
 }
 
 # (Optional) Attach IAM Role to the S3 Bucket Policy
